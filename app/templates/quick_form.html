@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-3">Quick Form</h2>
+<p class="text-muted">Fill this in the portal. When you save, a <strong>PDF</strong> is created in your <strong>Personal library</strong>.</p>
+
+<div class="card">
+  <div class="card-body">
+    <form method="post">
+      <div class="mb-3">
+        <label class="form-label fw-bold">Title</label>
+        <input name="title" class="form-control" placeholder="e.g., Weekly check-in with P2" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">My Goal</label>
+        <textarea name="goal" class="form-control" rows="2" placeholder="What are you trying to achieve?"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">My Plan</label>
+        <textarea name="plan" class="form-control" rows="2" placeholder="How will you try to reach it?"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Action / What I did</label>
+        <textarea name="action" class="form-control" rows="2" placeholder="What did you try?"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">Response I got</label>
+        <textarea name="response" class="form-control" rows="2" placeholder="What happened?"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-bold">What I learned &amp; will do next</label>
+        <textarea name="learn" class="form-control" rows="2" placeholder="Insight + next step"></textarea>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Save to Personal library (PDF)</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('main.documents') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

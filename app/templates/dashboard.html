@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>My Goal & Plan Tracker</h2>
+  </div>
+
+  <!-- Goal (static until reached) -->
+  <div class="card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">My Goal (static until reached)</h5>
+      <div class="text-muted small">Set it once; change only when you mark it done.</div>
+    </div>
+
+    <div class="mt-3">
+      <label class="form-label fw-bold" for="goalInput">My Goal</label>
+      <textarea id="goalInput" class="form-control" rows="2"
+        placeholder="e.g., Get a simple personal portal live quickly, simply, and inexpensively.">{{ experiment_title or '' }}</textarea>
+
+      <div class="mt-2 d-flex gap-2">
+        <button class="btn btn-primary btn-sm" id="saveGoalBtn">Set / Update Goal</button>
+        <button class="btn btn-outline-secondary btn-sm" id="editGoalBtn" style="display:none;">Edit Goal</button>
+        <button class="btn btn-danger btn-sm ms-auto" id="resetGoalBtn" title="Marks current goal as reached and unlocks the field">Mark Goal Reached (Reset)</button>
+      </div>
+      <div id="goalSaved" class="small text-success mt-1" style="display:none;">Goal saved ✓</div>
+    </div>
+  </div>
+
+  <!-- Plan-driven entry form -->
+  <div class="card p-3 mb-3">
+    <h5 class="mb-3">New Plan & Check-in</h5>
+    <p class="text-muted mb-3">
+      Each time you enter a <strong>new Plan</strong> (what you will do next) and save it, we
+      <em>generate a cumulative entry</em> and clear these fields. The goal above remains unchanged until you mark it reached.
+    </p>
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label fw-bold">Plan (what I will do next)</label>
+        <textarea id="f_plan" class="form-control" rows="2"
+          placeholder="e.g., Work with John on Pabb.io, Rocket.Chat, and possibly Zoho One."></textarea>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-bold">Action (what I actually did)</label>
+        <textarea id="f_action" class="form-control" rows="2"
+          placeholder="e.g., Slacked John with the doc tables we need."></textarea>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-bold">Response I got</label>
+        <textarea id="f_response" class="form-control" rows="2"
+          placeholder="e.g., Nothing yet."></textarea>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-bold">What I learned</label>
+        <textarea id="f_learn" class="form-control" rows="2"
+          placeholder="e.g., It may be too early to expect a reply; plan to wait."></textarea>
+      </div>
+
+      <div class="col-12 col-md-6">
+        <label class="form-label fw-bold">Do next</label>
+        <textarea id="f_next" class="form-control" rows="2"
+          placeholder="e.g., Wait 24 hours, then follow up once."></textarea>
+      </div>
+    </div>
+
+    <div class="mt-3 d-flex align-items-center">
+      <button id="savePlanBtn" class="btn btn-success">Save Plan / Generate Entry</button>
+      <div id="addError" class="text-danger small ms-3" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Cumulative list -->
+  <div class="card p-3">
+    <h5 class="mb-3">Cumulative Entries</h5>
+
+    <!-- Table header -->
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 180px;">Created</th>
+            <th>Plan</th>
+            <th>Action</th>
+            <th>Response</th>
+            <th>Learning</th>
+            <th>Do next</th>
+          </tr>
+        </thead>
+        <tbody id="entryTableBody">
+          {% for e in entries %}
+          <tr>
+            <td><strong>{{ e.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</strong></td>
+            <td colspan="5">{{ e.text|safe }}</td>
+          </tr>
+          {% endfor %}
+          {% if not entries %}
+          <tr id="noEntriesRow">
+            <td colspan="6" class="text-muted">No entries yet — add your first plan above.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Elements
+  const goalInput = document.getElementById('goalInput');
+  const saveGoalBtn = document.getElementById('saveGoalBtn');
+  const editGoalBtn = document.getElementById('editGoalBtn');
+  const resetGoalBtn = document.getElementById('resetGoalBtn');
+  const goalSaved = document.getElementById('goalSaved');
+
+  const f_plan = document.getElementById('f_plan');
+  const f_action = document.getElementById('f_action');
+  const f_response = document.getElementById('f_response');
+  const f_learn = document.getElementById('f_learn');
+  const f_next = document.getElementById('f_next');
+
+  const savePlanBtn = document.getElementById('savePlanBtn');
+  const addError = document.getElementById('addError');
+  const entryTableBody = document.getElementById('entryTableBody');
+
+  // ----- GOAL BEHAVIOR (static until reached) -----
+  // On load: if a goal exists, lock field & show "Edit" button.
+  const initialGoal = (goalInput.value || '').trim();
+  if (initialGoal) {
+    lockGoalField(true);
+  }
+
+  function lockGoalField(lock) {
+    goalInput.readOnly = lock;
+    saveGoalBtn.style.display = lock ? 'none' : 'inline-block';
+    editGoalBtn.style.display = lock ? 'inline-block' : 'none';
+  }
+
+  saveGoalBtn.addEventListener('click', async () => {
+    const title = (goalInput.value || '').trim();
+    // Reuse existing endpoint to persist the goal string
+    const form = new FormData();
+    form.append('title', title);
+    const res = await fetch('{{ url_for("main.api_save_experiment") }}', { method: 'POST', body: form });
+    if (res.ok) {
+      showSaved(goalSaved);
+      if (title) lockGoalField(true);
+    }
+  });
+
+  editGoalBtn.addEventListener('click', () => {
+    lockGoalField(false);
+    goalInput.focus();
+  });
+
+  resetGoalBtn.addEventListener('click', async () => {
+    // Mark goal reached by clearing stored title; unlock field
+    const form = new FormData();
+    form.append('title', '');
+    const res = await fetch('{{ url_for("main.api_save_experiment") }}', { method: 'POST', body: form });
+    if (res.ok) {
+      goalInput.value = '';
+      lockGoalField(false);
+      showSaved(goalSaved);
+    }
+  });
+
+  // ----- PLAN-DRIVEN ENTRY CREATION -----
+  // Hitting Ctrl+Enter on Plan also saves entry
+  f_plan.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      savePlanBtn.click();
+      e.preventDefault();
+    }
+  });
+
+  savePlanBtn.addEventListener('click', async () => {
+    addError.style.display = 'none';
+
+    const plan = (f_plan.value || '').trim();
+    const action = (f_action.value || '').trim();
+    const response = (f_response.value || '').trim();
+    const learn = (f_learn.value || '').trim();
+    const next = (f_next.value || '').trim();
+
+    // Require at least a Plan
+    if (!plan) {
+      addError.textContent = 'Please enter a Plan (what you will do next).';
+      addError.style.display = 'block';
+      return;
+    }
+
+    // Construct formatted block with column names Mitch requested
+    const block = `
+<strong>Plan</strong>: ${escapeHtml(plan)}<br>
+<strong>Action</strong>: ${escapeHtml(action || '-')}<br>
+<strong>Response</strong>: ${escapeHtml(response || '-')}<br>
+<strong>Learning</strong>: ${escapeHtml(learn || '-')}<br>
+<strong>Do next</strong>: ${escapeHtml(next || '-')}
+`.trim();
+
+    const form = new FormData();
+    form.append('text', block);
+
+    try {
+      const res = await fetch('{{ url_for("main.api_add_goal_entry") }}', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || 'Error');
+
+      // Prepend new table row
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${data.created_at}</strong></td>
+        <td colspan="5">${data.text}</td>
+      `;
+      entryTableBody.prepend(tr);
+
+      // Hide "no entries" row if present
+      const noRow = document.getElementById('noEntriesRow');
+      if (noRow) noRow.remove();
+
+      // Clear editable fields after saving (per spec)
+      [f_plan, f_action, f_response, f_learn, f_next].forEach(el => el.value = '');
+
+    } catch (err) {
+      addError.textContent = err.message || 'Something went wrong.';
+      addError.style.display = 'block';
+    }
+  });
+
+  // Helpers
+  function showSaved(el) {
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 1200);
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+});
+</script>
+{% endblock %}
+

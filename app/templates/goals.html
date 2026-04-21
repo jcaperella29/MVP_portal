@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-3">My Notes and Goals</h2>
+
+<!-- Add Goal -->
+<div class="card mb-3">
+  <div class="card-body">
+    <h5 class="card-title mb-3">Add a goal</h5>
+    <form id="new-goal-form" class="row g-2">
+      <div class="col-12 col-md-6">
+        <label class="form-label">Goal title</label>
+        <input class="form-control" id="goal-title" placeholder="e.g., Finish MVP review">
+      </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Add a step</label>
+        <div class="input-group">
+          <input class="form-control" id="step-input" placeholder="e.g., Draft survey">
+          <button class="btn btn-outline-secondary" type="button" id="add-step-btn">Add step</button>
+        </div>
+        <div id="pending-steps" class="small text-muted mt-1"></div>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="goal-notes" rows="2" placeholder="Any context or details…"></textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary">Save goal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Goals List -->
+<div id="goals-list" class="d-flex flex-column gap-3"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  // --- Storage helpers ---
+  const STORAGE_KEY = 'goals_v2';
+  const load = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  const save = (data) => localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // --- State ---
+  let goals = load();
+  let pendingSteps = [];
+
+  // --- DOM refs ---
+  const listEl = document.getElementById('goals-list');
+  const formEl = document.getElementById('new-goal-form');
+  const titleEl = document.getElementById('goal-title');
+  const notesEl = document.getElementById('goal-notes');
+  const stepInputEl = document.getElementById('step-input');
+  const pendingStepsEl = document.getElementById('pending-steps');
+  const addStepBtn = document.getElementById('add-step-btn');
+
+  // --- Pending steps UI (before saving a new goal) ---
+  function renderPendingSteps(){
+    if (pendingSteps.length === 0) {
+      pendingStepsEl.textContent = 'No steps added yet.';
+      return;
+    }
+    pendingStepsEl.innerHTML = pendingSteps.map((t, i) =>
+      `<span class="badge text-bg-light me-1 mb-1">
+        ${escapeHtml(t)} 
+        <button type="button" class="btn btn-sm btn-link p-0 ms-1" data-remove-pending="${i}">✕</button>
+      </span>`
+    ).join('');
+  }
+
+  addStepBtn.addEventListener('click', () => {
+    const t = stepInputEl.value.trim();
+    if (!t) return;
+    pendingSteps.push(t);
+    stepInputEl.value = '';
+    renderPendingSteps();
+  });
+
+  pendingStepsEl.addEventListener('click', (e) => {
+    const idx = e.target.getAttribute('data-remove-pending');
+    if (idx !== null) {
+      pendingSteps.splice(Number(idx), 1);
+      renderPendingSteps();
+    }
+  });
+
+  // --- Create goal ---
+  formEl.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const title = titleEl.value.trim();
+    if (!title) { titleEl.focus(); return; }
+
+    const goal = {
+      id: cryptoRandomId(),
+      title,
+      notes: notesEl.value.trim(),
+      steps: pendingSteps.map(t => ({ text: t, done: false })),
+      created_at: Date.now()
+    };
+    goals.push(goal);
+    save(goals);
+
+    // reset form
+    titleEl.value = '';
+    notesEl.value = '';
+    pendingSteps = [];
+    renderPendingSteps();
+
+    render();
+  });
+
+  // --- Render all goals ---
+  function render(){
+    if (goals.length === 0) {
+      listEl.innerHTML = `
+        <div class="card">
+          <div class="card-body text-muted">No goals yet.</div>
+        </div>`;
+      return;
+    }
+    listEl.innerHTML = goals
+      .sort((a,b) => a.created_at - b.created_at)
+      .map(goalCardHTML)
+      .join('');
+  }
+
+  // --- Card HTML per goal ---
+  function goalCardHTML(g){
+    const total = g.steps.length || 1;
+    const done = g.steps.filter(s => s.done).length;
+    const pct  = Math.round((done / total) * 100);
+
+    const stepsHTML = (g.steps.length
+      ? g.steps.map((s, i) => `
+        <li class="list-group-item d-flex align-items-center">
+          <input class="form-check-input me-2" type="checkbox" ${s.done ? 'checked' : ''} 
+                 data-tgl-step="${g.id}:${i}">
+          <span class="${s.done ? 'text-decoration-line-through text-muted' : ''}">
+            ${escapeHtml(s.text)}
+          </span>
+          <button class="btn btn-sm btn-link ms-auto text-danger" data-del-step="${g.id}:${i}">Remove</button>
+        </li>`).join('')
+      : `<li class="list-group-item text-muted">No steps yet.</li>`
+    );
+
+    return `
+    <div class="card" data-goal="${g.id}">
+      <div class="card-body">
+        <div class="d-flex align-items-start">
+          <div class="flex-grow-1">
+            <h5 class="card-title mb-1">${escapeHtml(g.title)}</h5>
+            <div class="progress mb-2" style="height: 10px;">
+              <div class="progress-bar" role="progressbar" style="width:${pct}%">${pct}%</div>
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-danger ms-2" data-del-goal="${g.id}">Delete</button>
+        </div>
+
+        ${g.notes ? `<p class="mb-2">${escapeHtml(g.notes)}</p>` : ''}
+
+        <ul class="list-group mb-3">
+          ${stepsHTML}
+        </ul>
+
+        <div class="input-group">
+          <input class="form-control" placeholder="Add a step…" data-add-step-input="${g.id}">
+          <button class="btn btn-outline-secondary" type="button" data-add-step-btn="${g.id}">Add step</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // --- Event delegation for goal actions ---
+  listEl.addEventListener('click', (e) => {
+    // toggle step
+    const tgl = e.target.getAttribute('data-tgl-step');
+    if (tgl) {
+      const [gid, idx] = tgl.split(':');
+      const g = goals.find(x => x.id === gid);
+      if (!g) return;
+      g.steps[idx].done = !g.steps[idx].done;
+      save(goals); render();
+      return;
+    }
+    // delete step
+    const delStep = e.target.getAttribute('data-del-step');
+    if (delStep) {
+      const [gid, idx] = delStep.split(':');
+      const g = goals.find(x => x.id === gid);
+      if (!g) return;
+      g.steps.splice(Number(idx), 1);
+      save(goals); render();
+      return;
+    }
+    // delete goal
+    const delGoal = e.target.getAttribute('data-del-goal');
+    if (delGoal) {
+      goals = goals.filter(x => x.id !== delGoal);
+      save(goals); render();
+      return;
+    }
+    // add step via button
+    const addBtn = e.target.getAttribute('data-add-step-btn');
+    if (addBtn) {
+      const input = listEl.querySelector(`[data-add-step-input="${addBtn}"]`);
+      const txt = input.value.trim();
+      if (!txt) return;
+      const g = goals.find(x => x.id === addBtn);
+      if (!g) return;
+      g.steps.push({ text: txt, done: false });
+      input.value = '';
+      save(goals); render();
+    }
+  });
+
+  // --- Utils ---
+  function cryptoRandomId(){
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxx'.replace(/x/g, () => (Math.random()*36|0).toString(36));
+  }
+  function escapeHtml(str){
+    return (str || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  // init
+  renderPendingSteps();
+  render();
+})();
+</script>
+{% endblock %}

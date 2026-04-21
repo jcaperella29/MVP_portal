@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Readme</title>
+  <style>
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #fafafa;
+      color: #333;
+      line-height: 1.6;
+      margin: 40px;
+    }
+    h1, h2, h3, h4 {
+      color: #005a9e;
+      margin-top: 1.4em;
+    }
+    ul {
+      margin-left: 1.5em;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 2em 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Personal Portal – Overview</h1>
+  <p>
+    This portal is designed as a unified dashboard for personal projects, collaboration, and internal documentation.
+    It integrates communication tools, meeting scheduling, project tracking, and cloud-based app deployment.
+  </p>
+
+  <hr>
+  <h2>🧭 Navigation</h2>
+  <p>
+    The navigation bar links to core sections of the portal:
+  </p>
+  <ul>
+    <li><strong>Dashboard:</strong> Overview of recent activity, quick links, and summary statistics.</li>
+    <li><strong>Meetings:</strong> Integrated calendar and meeting manager with links to Zoom/Google Meet.</li>
+    <li><strong>Chat:</strong> Real-time collaboration and internal messaging.</li>
+    <li><strong>Files:</strong> Cloud-linked file management for documents and reference material.</li>
+    <li><strong>Settings:</strong> User profile management, authentication, and API integrations.</li>
+  </ul>
+
+  <hr>
+  <h2>⚙️ Deployment</h2>
+  <p>
+    The portal is containerized and deployed using <strong>AWS App Runner</strong> with <strong>Copilot CLI</strong> for automation.
+    Deployment steps:
+  </p>
+  <ol>
+    <li>Ensure Dockerfile builds successfully locally.</li>
+    <li>Use <code>copilot init</code> to create the service.</li>
+    <li>Run <code>copilot deploy</code> to push the container to AWS App Runner.</li>
+    <li>Use <code>copilot svc logs</code> for live log review during rollout.</li>
+  </ol>
+  <p>
+    Copilot simplifies configuration by managing service creation, load balancing, and secret handling.
+  </p>
+
+  <hr>
+  <h2>💻 Tech Stack</h2>
+  <ul>
+    <li><strong>Frontend:</strong> HTML, CSS, Bootstrap, Vanilla JS</li>
+    <li><strong>Backend:</strong> Python Flask (lightweight REST endpoints)</li>
+    <li><strong>Deployment:</strong> AWS App Runner + Copilot CLI</li>
+    <li><strong>Authentication:</strong> Flask-Login with session cookies</li>
+    <li><strong>Data Storage:</strong> Cloud storage integration for shared files</li>
+    <li><strong>Communication:</strong> CometChat Embed for live chat</li>
+  </ul>
+
+  <hr>
+  <h2>🧩 Integrations</h2>
+  <ul>
+    <li><strong>Google Calendar API</strong> – meeting scheduling and retrieval</li>
+    <li><strong>CometChat</strong> – real-time messaging system</li>
+    <li><strong>Pumble / Peb.io</strong> – optional legacy chat integrations</li>
+    <li><strong>AWS Secrets Manager</strong> – secure storage of environment variables</li>
+  </ul>
+
+  <hr>
+  <h2>🗂 Pages</h2>
+
+  <h4>🏠 Dashboard</h4>
+  <p>
+    Displays user-specific summaries, activity charts, and shortcuts to ongoing projects.
+    Designed for quick status visibility on both desktop and mobile.
+  </p>
+
+  <h4>📅 Meetings</h4>
+  <p>
+    Integrates with Google Calendar API for automatic event synchronization.
+    Upcoming events appear directly within the portal with join-link buttons.
+  </p>
+
+  <h4>📁 Files</h4>
+  <p>
+    Provides an interface to upload, download, and view project-related files.
+    Files are stored securely in a connected cloud bucket and indexed by user ID.
+  </p>
+
+  <hr>
+  <h4>💬 Chat</h4>
+  <p>
+    The <strong>Chat</strong> page now features a fully integrated real-time chat system powered by
+    <strong>CometChat Embed</strong>.  
+    This enables all signed-in portal members to communicate instantly within a shared workspace.
+  </p>
+  <ul>
+    <li><strong>Automatic Login & Identity:</strong> Users are automatically logged in to CometChat with their
+        portal username and display name.</li>
+    <li><strong>Portal Users Group:</strong> Everyone joins a shared public group called
+        <em>Portal Users</em>—a central space for discussion, questions, and coordination.</li>
+    <li><strong>Live Updates:</strong> Messages sync in real-time with no refresh needed.</li>
+    <li><strong>Future Expansion:</strong> Support for private rooms and topic-based groups will be added later.</li>
+  </ul>
+  <p><em>Tip:</em> Keep chat discussions professional and focused on collaboration; history is persistent for reference.</p>
+
+  <hr>
+  <h4>👤 Profile & Settings</h4>
+  <p>
+    Manage account credentials, profile photo, and linked integrations.
+    Options are provided for regenerating API keys and managing connected services.
+  </p>
+
+  <hr>
+  <h2>🔒 Security Notes</h2>
+  <ul>
+    <li>Authentication handled via Flask-Login and hashed passwords.</li>
+    <li>Secrets stored securely with AWS Secrets Manager.</li>
+    <li>CometChat Auth Key temporarily hard-coded for testing—will migrate to secrets before production.</li>
+    <li>HTTPS enforced for all routes in deployment.</li>
+  </ul>
+
+  <hr>
+  <h2>📈 Roadmap</h2>
+  <ul>
+    <li>Integrate CometChat private channels and direct messaging.</li>
+    <li>Add analytics panel for usage metrics and performance tracking.</li>
+    <li>Introduce admin moderation for group chat management.</li>
+    <li>Expand deployment automation to support staging environments.</li>
+  </ul>
+
+  <hr>
+  <h2>📞 Support</h2>
+  <p>
+    For deployment or access issues, contact the system administrator or project maintainer.  
+    Feedback on UI, performance, or integrations is welcome.
+  </p>
+</body>
+</html>
+

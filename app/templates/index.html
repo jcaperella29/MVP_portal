@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+  <div class="container py-5">
+    <h1 class="display-6">Welcome</h1>
+    <p class="lead">This is a lightweight portal skeleton. Sign in to access your dashboard, goals, documents, reports, chat, and meetings.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}">Get started</a>
+  </div>
+</div>
+{% endblock %}

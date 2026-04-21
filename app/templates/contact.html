@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-2">Connect Support</h2>
+<p class="text-muted mb-4">Send a quick note to John or Mitch.</p>
+
+{% set default_subject = 'Portal support' %}
+{% set default_body = 'Hi,\n\n(Write your message here and include any relevant details.)\n\nThanks,' %}
+
+<!-- ===== Card helper macro ===== -->
+{% macro contact_card(label, email, subject_id, msg_id, form_prefix) %}
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="mb-3">
+      To: <strong>{{ label }}</strong> —
+      <a href="mailto:{{ email }}">{{ email }}</a>
+    </h5>
+
+    {% if contact_form_enabled %}
+    <form method="POST" action="{{ url_for('main.contact') }}" class="stack">
+      <input type="hidden" name="to_email" value="{{ email }}" />
+      <!-- honeypot -->
+      <input type="text" name="website" autocomplete="off" tabindex="-1" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;opacity:0" />
+
+      <div class="mb-3">
+        <label for="{{ form_prefix }}_from" class="form-label">Your email (for reply)</label>
+        <input id="{{ form_prefix }}_from" name="from_email" type="email" class="form-control"
+               value="{{ from_email|default('') }}" placeholder="you@example.com" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ subject_id }}" class="form-label">Subject</label>
+        <input id="{{ subject_id }}" name="subject" type="text" class="form-control"
+               value="{{ subject|default('') }}" placeholder="Subject" maxlength="140" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ msg_id }}" class="form-label">Message</label>
+        <textarea id="{{ msg_id }}" name="message" class="form-control" rows="8"
+                  placeholder="Write your message here…" maxlength="5000" required>{{ message|default('') }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary px-4">Send</button>
+    </form>
+    {% else %}
+      <a class="btn btn-primary"
+         href="mailto:{{ email }}?subject={{ default_subject | urlencode }}&body={{ default_body | urlencode }}">
+        Email {{ label.split(' ')[0] }}
+      </a>
+      <p class="text-muted mt-2 small">Opens your email app with a pre-filled subject and body.</p>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{{ contact_card('John (Developer)', john_email, 'subject_john', 'message_john', 'john') }}
+{{ contact_card('Mitch (Founder)', mitch_email, 'subject_mitch', 'message_mitch', 'mitch') }}
+
+<style>
+  .stack { max-width: 760px }
+</style>
+{% endblock %}

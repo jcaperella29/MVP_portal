@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-3">Calendar</h2>
+<p class="text-muted">Add meetings/events. Four columns: name, date, time, link.</p>
+
+<div class="card">
+  <div class="card-body">
+    <table id="meetingTable" class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Name of Meeting</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Link</th>
+          <th style="width:60px;"></th>
+        </tr>
+      </thead>
+      <tbody id="meetingBody"></tbody>
+    </table>
+
+    <button class="btn btn-primary" id="addRowBtn">Add Row</button>
+    <button class="btn btn-outline-danger ms-2" id="clearAllBtn">Clear All</button>
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const tableBody = document.getElementById('meetingBody');
+  const addRowBtn = document.getElementById('addRowBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+
+  const key = 'meetings';
+  const load = () => JSON.parse(localStorage.getItem(key) || '[]');
+  const save = (arr) => localStorage.setItem(key, JSON.stringify(arr));
+
+  function render(meetings){
+    tableBody.innerHTML = '';
+    meetings.forEach((m, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" value="${m.name||''}" placeholder="Meeting name"></td>
+        <td><input type="date" class="form-control form-control-sm" value="${m.date||''}"></td>
+        <td><input type="time" class="form-control form-control-sm" value="${m.time||''}"></td>
+        <td><input type="url"  class="form-control form-control-sm" value="${m.link||''}" placeholder="https://..."></td>
+        <td><button class="btn btn-sm btn-outline-danger del">✕</button></td>
+      `;
+      // Live update
+      tr.querySelectorAll('input').forEach(() => {
+        tr.addEventListener('input', () => {
+          meetings[i] = {
+            name: tr.children[0].querySelector('input').value,
+            date: tr.children[1].querySelector('input').value,
+            time: tr.children[2].querySelector('input').value,
+            link: tr.children[3].querySelector('input').value
+          };
+          save(meetings);
+        });
+      });
+      // Delete
+      tr.querySelector('.del').addEventListener('click', () => {
+        meetings.splice(i,1);
+        save(meetings);
+        render(meetings);
+      });
+      tableBody.appendChild(tr);
+    });
+  }
+
+  const meetings = load();
+  render(meetings);
+
+  addRowBtn.addEventListener('click', () => {
+    meetings.push({name:'', date:'', time:'', link:''});
+    save(meetings); render(meetings);
+  });
+
+  clearAllBtn.addEventListener('click', () => {
+    if(confirm('Clear all meetings?')){
+      localStorage.removeItem(key);
+      render([]);
+    }
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

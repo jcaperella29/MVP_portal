@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='style.css', v=BUILD_VERSION) }}" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico', v=BUILD_VERSION) }}" type="image/x-icon">
+   <link rel="icon" sizes="any" href="{{ url_for('static', filename='favicon.png', v=BUILD_VERSION) }}">
+
+    <style>
+      .nav-link.active { font-weight: 700; }
+      @media (max-width: 576px){ .nav-link.active { text-decoration: underline; } }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('main.dashboard') }}">
+          {% if current_user.is_authenticated %}
+            Hi, {{ current_user.name or (current_user.email.split('@')[0] if current_user.email else 'there') }}
+          {% else %}
+            Portal
+          {% endif %}
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="topnav">
+          <ul class="navbar-nav me-auto">
+            {% if current_user.is_authenticated %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'main.dashboard' %}active{% endif %}"
+                   href="{{ url_for('main.dashboard') }}">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.readme') }}">Help</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'main.documents' %}active{% endif %}"
+                   href="{{ url_for('main.documents') }}">Documents</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'main.calendar' %}active{% endif %}"
+                   href="{{ url_for('main.calendar') }}">Calendar</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'main.chat' %}active{% endif %}"
+                   href="{{ url_for('main.chat') }}">Chat</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'main.contact' %}active{% endif %}"
+                   href="{{ url_for('main.contact') }}">Contact Mitch</a>
+              </li>
+            {% endif %}
+          </ul>
+
+          <ul class="navbar-nav ms-auto">
+            {% if current_user.is_authenticated %}
+              <li class="nav-item"><a class="btn btn-outline-light btn-sm" href="{{ url_for('auth.logout') }}">Logout</a></li>
+            {% else %}
+              <li class="nav-item"><a class="btn btn-outline-light btn-sm me-2" href="{{ url_for('auth.login') }}">Login</a></li>
+              <li class="nav-item"><a class="btn btn-warning btn-sm" href="{{ url_for('auth.register') }}">Sign up</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container" style="padding-top:70px;">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mt-2">
+            {% for category, msg in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ msg }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+
+      <!-- Bottom tabs (mobile) -->
+      <nav class="d-md-none navbar fixed-bottom navbar-light bg-light border-top">
+        <div class="container d-flex justify-content-around py-1">
+          <a class="nav-link small {% if request.endpoint == 'main.dashboard' %}active{% endif %}" href="{{ url_for('main.dashboard') }}">Home</a>
+          <a class="nav-link small {% if request.endpoint == 'main.documents' %}active{% endif %}" href="{{ url_for('main.documents') }}">Docs</a>
+          <a class="nav-link small {% if request.endpoint == 'main.calendar' %}active{% endif %}" href="{{ url_for('main.calendar') }}">Calendar</a>
+          <a class="nav-link small {% if request.endpoint == 'main.chat' %}active{% endif %}" href="{{ url_for('main.chat') }}">Chat</a>
+          <a class="nav-link small {% if request.endpoint == 'main.contact' %}active{% endif %}" href="{{ url_for('main.contact') }}">Contact</a>
+        </div>
+      </nav>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-..." crossorigin="anonymous"></script>
+    <script defer src="{{ url_for('static', filename='app.js', v=BUILD_VERSION) }}"></script>
+
+  </body>
+</html>

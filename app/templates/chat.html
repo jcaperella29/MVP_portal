@@ -1,0 +1,55 @@
+<div id="cometChatMount" style="width:100%;min-height:520px;height:520px;"></div>
+<pre id="cc-debug" class="small text-danger" style="white-space:pre-wrap;"></pre>
+
+<script>
+  function initComet() {
+    const dbg = (m)=>{ const el=document.getElementById('cc-debug'); if(el) el.textContent = (el.textContent? el.textContent+'\n':'') + m; };
+
+    if (!window.CometChatApp) { dbg('CometChat SDK not loaded'); return; }
+
+    const CREDS = {
+      appID: "16703374f9821f737",
+      appRegion: "us",           // ← ensure lowercase, match dashboard
+      authKey: "9ebb606f4894b1f81e7b99e7951bc2d8c747c3f0"
+    };
+
+    const RAW_USERNAME = "{{ (current_user.username or '')|string }}";
+    const RAW_EMAIL    = "{{ (current_user.email or '')|string }}";
+    const DISPLAY_NAME = "{{ (current_user.name or current_user.username or 'User')|e }}";
+    const UID = (String(RAW_USERNAME || RAW_EMAIL).toLowerCase().trim()
+                  .replace(/@.*/, '')
+                  .replace(/[^a-z0-9_]/g, '_')
+                  .replace(/^_+|_+$/g, '')
+                  .slice(0,30)) || ('user_' + Math.random().toString(36).slice(2,8));
+
+    const GROUP_GUID = "portal_users";   // ← must already exist
+    const OPTIONS = {
+      targetElementID: "cometChatMount",
+      isDocked: false,
+      width: "100%",
+      height: "520px",
+      variantID: "68f24959b8e2941a9550032b",
+      chatType: "group",
+      defaultChatID: GROUP_GUID
+    };
+
+    CometChatApp.init(CREDS)
+      .then(() => dbg('init ✓'))
+      .then(() => CometChatApp.createOrUpdateUser({ uid: UID, name: DISPLAY_NAME }))
+      .then(() => dbg('user upsert ✓'))
+      .then(() => CometChatApp.login({ uid: UID }))
+      .then(() => dbg('login ✓'))
+      // 🚫 REMOVE client-side group create/update (requires REST key)
+      .then(() => CometChatApp.launch(OPTIONS))
+      .then(() => dbg('launched ✓'))
+      .catch(e => dbg('FATAL ' + (e.code||'') + ' ' + (e.message||e)));
+  }
+</script>
+
+<!-- Load the Embed SDK AFTER the function exists -->
+<script src="https://cdn.jsdelivr.net/npm/@cometchat/chat-embed@latest/dist/main.js"
+        onload="initComet()"
+        onerror="document.getElementById('cc-debug').textContent='Failed to load CometChat SDK';">
+</script>
+
+

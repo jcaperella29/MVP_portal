@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2 class="mb-3">Documents</h2>
+<p class="text-muted">Upload and browse files. “Personal library” is just for you; “General library” is visible to all users.</p>
+
+<div class="row g-4">
+
+  <!-- Personal library -->
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title d-flex align-items-center">
+          <span class="me-2">📁</span> Personal library
+        </h5>
+        <p class="text-muted mb-2">
+          Your private uploads (e.g., forms you filled, notes, goals docs).
+          <br><small>Tip: Quick Form PDFs are saved under <code>forms/</code>.</small>
+        </p>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <a class="btn btn-outline-primary btn-sm" href="{{ url_for('main.quick_form') }}">
+            Fill a quick form (save as PDF)
+          </a>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('main.browse_documents', scope='personal') }}">
+            Browse files
+          </a>
+        </div>
+
+        <form class="d-flex gap-2 mb-3" method="post" enctype="multipart/form-data"
+              action="{{ url_for('main.upload_document', scope='personal') }}">
+          <input class="form-control" type="file" name="files" multiple
+                 accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.csv">
+          <button class="btn btn-primary" type="submit">Upload to root</button>
+        </form>
+
+        {% if personal_files %}
+          <ul class="list-group small">
+            {% for f in personal_files %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="text-truncate" title="{{ f.name }}">{{ f.name }}</div>
+                <div class="ms-3">
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="{{ url_for('main.download_document', scope='personal', filename=f.name) }}">Download</a>
+                  <a class="btn btn-sm btn-outline-danger"
+                     href="{{ url_for('main.delete_document', scope='personal', filename=f.name) }}"
+                     onclick="return confirm('Delete this file?');">Delete</a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0">No files in root. Use <em>Browse files</em> to see subfolders.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- General library -->
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h5 class="card-title d-flex align-items-center">
+          <span class="me-2">📁</span> General library
+        </h5>
+        <p class="text-muted mb-3">Shared materials or templates visible to everyone.</p>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('main.browse_documents', scope='general') }}">
+            Browse files
+          </a>
+        </div>
+
+        <form class="d-flex gap-2 mb-3" method="post" enctype="multipart/form-data"
+              action="{{ url_for('main.upload_document', scope='general') }}">
+          <input class="form-control" type="file" name="files" multiple
+                 accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.csv">
+          <button class="btn btn-primary" type="submit">Upload to shared root</button>
+        </form>
+
+        {% if general_files %}
+          <ul class="list-group small">
+            {% for f in general_files %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="text-truncate" title="{{ f.name }}">{{ f.name }}</div>
+                <div class="ms-3">
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="{{ url_for('main.download_document', scope='general', filename=f.name) }}">Download</a>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mb-0">No shared files in root. Use <em>Browse files</em> to see subfolders.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="my-4">
+<h5 class="mb-2">Surveys (templates & completed uploads)</h5>
+<p class="text-muted">
+  Early phase: participants can download a template, fill it, and re-upload to their <strong>Personal library</strong>,
+  or use <em>Quick Form</em> to capture directly in the portal (PDF).
+</p>
+{% endblock %}
