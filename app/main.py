@@ -306,7 +306,7 @@ def calendar():
 @main_bp.route("/chat")
 @login_required
 def chat():
-    return render_template("chat.html")
+    return render_template("chat.html", chat_group_guid="portal_users")
 
 @main_bp.route("/contact", methods=["GET", "POST"])
 @login_required
@@ -405,5 +405,4 @@ def goals():
 @login_required
 def readme():
     return render_template("Readme.html")
-
 
